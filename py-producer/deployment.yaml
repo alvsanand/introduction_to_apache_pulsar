@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: py-producer-deployment
+  labels:
+    app: py-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: py-producer
+  template:
+    metadata:
+      labels:
+        app: py-producer
+    spec:
+      containers:
+      - name: py-producer
+        image: py-producer:latest
+        imagePullPolicy: Never
+        env:
+        - name: PULSAR_URL
+          value: "pulsar://pulsar-cluster-broker.pulsar:6650"
+        - name: PULSAR_NAMESPACE
+          value: "public/ns1"
+        - name: TOPIC_SUBSCRIPTION
+          value: "my_subscription"
+        - name: TOPIC_NAME
+          value: "bank_transactions"
+        - name: PRODUCER_RATE
+          value: "5"

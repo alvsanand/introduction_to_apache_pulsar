@@ -1,0 +1,9 @@
+.git
+idea/
+.vscode/.ropeproject/
+.history
+*/__pycache__/
+*/.dist
+*/dist
+*venv/
+*.pyc
