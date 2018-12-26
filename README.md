@@ -90,7 +90,7 @@ After a Kubernertes cluster is ready to use, the first thing to do is to deploy 
 
 ### Python Producer
 
-In order to generate data, we will launch a python producer that generates random data and send it to a Pulsar topic.
+In order to generate data, we will launch a python producer that generates random transactions and send it to a Pulsar topic.
 
 - Locally:
 
@@ -114,3 +114,28 @@ In order to generate data, we will launch a python producer that generates rando
 
         # Stop producer in K8s
         kubectl delete -f deployment.yaml
+
+### Function
+
+Next to do, it is to deploy a Pulsar function that will route the transactions to different topics based on the currency:
+
+    cd functions
+    
+    alias pulsar-admin='kubectl exec --namespace pulsar $(kubectl get pods --namespace pulsar -l app=pulsar,component=bastion -o jsonpath={.items..metadata.name}) -it -- bin/pulsar-admin'
+
+    # Upload files to pulsar-admin pod
+    for f in transaction_routing.*; do
+        kubectl cp $f pulsar/$(kubectl get pods --namespace pulsar -l app=pulsar,component=bastion -o jsonpath={.items..metadata.name}):/pulsar
+    done
+
+    # Install function
+    pulsar-admin functions create --functionConfigFile transaction_routing.yaml
+
+    # Get the status of the function
+    pulsar-admin functions getstatus --name transaction_routing --namespace ns1 --tenant public
+
+    # Execute python consumer
+    kubectl exec $(kubectl get pods -l app=py-producer -o jsonpath={.items..metadata.name}) -it -- bash
+    export TOPIC_NAME=bank_transactions_routed_dollar
+    python receiver.py
+    

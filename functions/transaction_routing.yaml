@@ -1,0 +1,12 @@
+name: transaction_routing
+tenant: public
+namespace: ns1
+py: transaction_routing.py
+className: transaction_routing.TransactionRoutingFunction
+inputs:
+- persistent://public/ns1/bank_transactions
+output: persistent://public/ns1/bank_transactions_results
+userConfig: {
+  "euro_topic": "persistent://public/ns1/bank_transactions_routed_euro",
+  "dollar_topic": "persistent://public/ns1/bank_transactions_routed_dollar"
+}
