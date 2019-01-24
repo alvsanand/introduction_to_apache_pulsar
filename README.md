@@ -67,8 +67,14 @@ After a Kubernertes cluster is ready to use, the first thing to do is to deploy 
     # Forward Pulsar dashboard port
     kubectl port-forward --namespace pulsar $(kubectl get pods --namespace pulsar -l component=dashboard -o jsonpath='{.items[*].metadata.name}') 8081:80 > /dev/null 2>&1 &
 
-    # Launch Pulsar Web service url
+    # Launch Pulsar dashboard
     xdg-open http://localhost:8081
+
+    # Forward Pulsar Grafana port
+    kubectl port-forward --namespace pulsar $(kubectl get pods --namespace pulsar -l component=grafana -o jsonpath='{.items[*].metadata.name}') 23000:3000 > /dev/null 2>&1 &
+
+    # Launch Pulsar Grafana
+    xdg-open http://localhost:23000
 
     # Create pulsar-admin and pulsar-perf alias
     alias pulsar-admin='kubectl exec --namespace pulsar $(kubectl get pods --namespace pulsar -l app=pulsar,component=bastion -o jsonpath={.items..metadata.name}) -it -- bin/pulsar-admin'
@@ -95,7 +101,7 @@ In order to generate data, we will launch a python producer that generates rando
 - Locally:
 
         cd py-producer
-        
+
         python3 -m venv venv
         source venv/bin/activate
         pip install -r requirements.txt
@@ -104,7 +110,7 @@ In order to generate data, we will launch a python producer that generates rando
 - Kubernetes:
 
         cd py-producer
-        
+
         # Build IMAGE
         eval $(minikube docker-env)
         docker build -t py-producer .
@@ -120,7 +126,7 @@ In order to generate data, we will launch a python producer that generates rando
 Next to do, it is to deploy a Pulsar function that will route the transactions to different topics based on the currency:
 
     cd functions
-    
+
     alias pulsar-admin='kubectl exec --namespace pulsar $(kubectl get pods --namespace pulsar -l app=pulsar,component=bastion -o jsonpath={.items..metadata.name}) -it -- bin/pulsar-admin'
 
     # Upload files to pulsar-admin pod
@@ -138,4 +144,3 @@ Next to do, it is to deploy a Pulsar function that will route the transactions t
     kubectl exec $(kubectl get pods -l app=py-producer -o jsonpath={.items..metadata.name}) -it -- bash
     export TOPIC_NAME=bank_transactions_routed_dollar
     python receiver.py
-    
