@@ -12,10 +12,10 @@ This repository contains the code used in the demo part of my talk "Life beyond 
 ### Kubernetes cluster
 
 The first thing to do is to install and deploy a Kubernetes cluster where we will run our Apache Pulsar cluster:
-    
+
     # Install minikube command
     curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.32.0/minikube-linux-amd64 && chmod +x minikube && sudo cp minikube /usr/local/bin/ && rm minikube
-    
+
     # Install
     curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.12.4/bin/linux/amd64/kubectl && chmod +x kubectl && sudo cp kubectl /usr/local/bin/ && rm kubectl
 
@@ -28,7 +28,7 @@ The first thing to do is to install and deploy a Kubernetes cluster where we wil
     # Test it with an example application
     kubectl run hello-minikube --image=k8s.gcr.io/echoserver:1.4 --port=8080
     kubectl expose deployment hello-minikube --type=NodePort
-    curl $(minikube service hello-minikube --url)   
+    curl $(minikube service hello-minikube --url)
     kubectl delete service hello-minikube
     kubectl delete deployment hello-minikube
 
@@ -38,7 +38,7 @@ The first thing to do is to install and deploy a Kubernetes cluster where we wil
 ### Helm
 
 In order to deploy the services in K8s, we will use Helm. So next thing is to install it:
-    
+
     # Install helm command
     curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | sh
 
@@ -57,6 +57,9 @@ After a Kubernertes cluster is ready to use, the first thing to do is to deploy 
     # Clone Apache Pulsar repository
     git clone https://github.com/apache/pulsar.git
 
+    # Check stable version
+    git checkout --track  origin/branch-2.2
+
     # Install Pulsar chart
     cd pulsar/deployment/kubernetes/helm
     helm install --values pulsar/values-mini.yaml ./pulsar --name pulsar-cluster
@@ -70,11 +73,20 @@ After a Kubernertes cluster is ready to use, the first thing to do is to deploy 
     # Launch Pulsar dashboard
     xdg-open http://localhost:8081
 
+    # In case Dashboard does not show any cluster, delete Pulsar dashboard pod
+    kubectl delete pods $(kubectl get pods --namespace pulsar -l component=dashboard -o jsonpath='{.items[*].metadata.name}')
+
     # Forward Pulsar Grafana port
     kubectl port-forward --namespace pulsar $(kubectl get pods --namespace pulsar -l component=grafana -o jsonpath='{.items[*].metadata.name}') 23000:3000 > /dev/null 2>&1 &
 
     # Launch Pulsar Grafana
     xdg-open http://localhost:23000
+
+    # Forward Pulsar Prometheus port
+    kubectl port-forward --namespace pulsar $(kubectl get pods --namespace pulsar -l component=prometheus -o jsonpath='{.items[*].metadata.name}') 29090:9090 > /dev/null 2>&1 &
+
+    # Launch Pulsar Prometheus
+    xdg-open http://localhost:29090
 
     # Create pulsar-admin and pulsar-perf alias
     alias pulsar-admin='kubectl exec --namespace pulsar $(kubectl get pods --namespace pulsar -l app=pulsar,component=bastion -o jsonpath={.items..metadata.name}) -it -- bin/pulsar-admin'
@@ -120,6 +132,9 @@ In order to generate data, we will launch a python producer that generates rando
 
         # Stop producer in K8s
         kubectl delete -f deployment.yaml
+
+        # Create a test consumer
+        pulsar-perf consume persistent://public/ns1/bank_transactions
 
 ### Function
 
