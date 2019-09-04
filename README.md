@@ -14,13 +14,13 @@ This repository contains the code used in the demo part of my talk "Life beyond 
 The first thing to do is to install and deploy a Kubernetes cluster where we will run our Apache Pulsar cluster:
 
     # Install minikube command
-    curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.32.0/minikube-linux-amd64 && chmod +x minikube && sudo cp minikube /usr/local/bin/ && rm minikube
+    curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && chmod +x minikube && sudo cp minikube /usr/local/bin/ && rm minikube
 
     # Install
-    curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.12.4/bin/linux/amd64/kubectl && chmod +x kubectl && sudo cp kubectl /usr/local/bin/ && rm kubectl
+    curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl && chmod +x kubectl && sudo cp kubectl /usr/local/bin/ && rm kubectl
 
     # Start a minikube cluster
-    minikube start --memory=8192 --cpus=8
+    minikube start --memory=12288 --cpus=8
 
     # Configure kubectl to use minikube
     kubectl config use-context minikube
@@ -55,17 +55,18 @@ In order to deploy the services in K8s, we will use Helm. So next thing is to in
 After a Kubernertes cluster is ready to use, the first thing to do is to deploy an Apache Puslar cluster
 
     # Clone Apache Pulsar repository
-    git clone https://github.com/apache/pulsar.git
+    git clone https://github.com/apache/pulsar.git && cd pulsar
 
     # Check stable version
-    git checkout --track  origin/branch-2.2
+    git checkout tags/v2.4.1
+
 
     # Install Pulsar chart
-    cd pulsar/deployment/kubernetes/helm
+    cd deployment/kubernetes/helm
     helm install --values pulsar/values-mini.yaml ./pulsar --name pulsar-cluster
 
     # Check Pulsar cluster
-    helm status pulsar-cluster
+    watch helm status pulsar-cluster
 
     # Forward Pulsar dashboard port
     kubectl port-forward --namespace pulsar $(kubectl get pods --namespace pulsar -l component=dashboard -o jsonpath='{.items[*].metadata.name}') 8081:80 > /dev/null 2>&1 &
@@ -93,7 +94,6 @@ After a Kubernertes cluster is ready to use, the first thing to do is to deploy 
     alias pulsar-perf='kubectl exec --namespace pulsar $(kubectl get pods --namespace pulsar -l app=pulsar,component=bastion -o jsonpath={.items..metadata.name}) -it -- bin/pulsar-perf'
 
     # Create a namespace
-    pulsar-admin namespaces create public/ns1
 
     # Set cluster to the namespace
     pulsar-admin namespaces set-clusters public/ns1 --clusters pulsar-cluster
@@ -101,7 +101,7 @@ After a Kubernertes cluster is ready to use, the first thing to do is to deploy 
     # Create a test consumer
     pulsar-perf consume persistent://public/ns1/topic1
 
-    # Create a test producer
+    # Create a test producer in other window
     pulsar-perf produce persistent://public/ns1/topic1
 
 ## Launch sample applications
