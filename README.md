@@ -75,7 +75,7 @@ After a Kubernertes cluster is ready to use, the first thing to do is to deploy 
     xdg-open http://localhost:8081
 
     # In case Dashboard does not show any cluster, delete Pulsar dashboard pod
-    kubectl delete pods $(kubectl get pods --namespace pulsar -l component=dashboard -o jsonpath='{.items[*].metadata.name}')
+    kubectl delete pods --namespace pulsar $(kubectl get pods --namespace pulsar -l component=dashboard -o jsonpath='{.items[*].metadata.name}')
 
     # Forward Pulsar Grafana port
     kubectl port-forward --namespace pulsar $(kubectl get pods --namespace pulsar -l component=grafana -o jsonpath='{.items[*].metadata.name}') 23000:3000 > /dev/null 2>&1 &
