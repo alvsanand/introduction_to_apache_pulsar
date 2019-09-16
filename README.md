@@ -74,9 +74,6 @@ After a Kubernertes cluster is ready to use, the first thing to do is to deploy 
     # Launch Pulsar dashboard
     xdg-open http://localhost:8081
 
-    # In case Dashboard does not show any cluster, delete Pulsar dashboard pod
-    kubectl delete pods --namespace pulsar $(kubectl get pods --namespace pulsar -l component=dashboard -o jsonpath='{.items[*].metadata.name}')
-
     # Forward Pulsar Grafana port
     kubectl port-forward --namespace pulsar $(kubectl get pods --namespace pulsar -l component=grafana -o jsonpath='{.items[*].metadata.name}') 23000:3000 > /dev/null 2>&1 &
 
@@ -94,6 +91,7 @@ After a Kubernertes cluster is ready to use, the first thing to do is to deploy 
     alias pulsar-perf='kubectl exec --namespace pulsar $(kubectl get pods --namespace pulsar -l app=pulsar,component=bastion -o jsonpath={.items..metadata.name}) -it -- bin/pulsar-perf'
 
     # Create a namespace
+    pulsar-admin namespaces create public/ns1
 
     # Set cluster to the namespace
     pulsar-admin namespaces set-clusters public/ns1 --clusters pulsar-cluster
@@ -156,6 +154,4 @@ Next to do, it is to deploy a Pulsar function that will route the transactions t
     pulsar-admin functions getstatus --name transaction_routing --namespace ns1 --tenant public
 
     # Execute python consumer
-    kubectl exec $(kubectl get pods -l app=py-producer -o jsonpath={.items..metadata.name}) -it -- bash
-    export TOPIC_NAME=bank_transactions_routed_dollar
-    python receiver.py
+    kubectl exec $(kubectl get pods -l app=py-producer -o jsonpath={.items..metadata.name}) -it -- bash -c 'export TOPIC_NAME=bank_transactions_routed_dollar; python receiver.py'

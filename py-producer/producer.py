@@ -53,7 +53,7 @@ def main():
         data = json.dumps(json_data).encode('utf-8')
 
         try:
-            if sent_msgs % 1000 == 0:
+            if sent_msgs % 50 == 0:
                 logger.info("Already sent %d messages", sent_msgs)
 
             producer.send(data)
